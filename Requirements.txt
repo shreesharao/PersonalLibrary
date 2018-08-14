@@ -1,0 +1,8 @@
+login page --remember me option
+registration page--normal, oauth
+books dashboard--
+add books
+update books
+bulk upload
+delete multiple
+api access

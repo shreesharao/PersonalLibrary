@@ -1,0 +1,48 @@
+# version format
+version: 1.0.{build}
+#
+# you can use {branch} name in version format too# version: 1.0.{build}-{branch}
+# branches to build#branches:  # whitelist # only: #   - master## Do not build on tags (GitHub and BitBucket)
+#skip_tags: true    #comment this line as this will stop tag builds
+## Build worker image (VM template)image: Visual Studio 2017
+# scripts that are called at very beginning, before repo cloninginit:  - git config --global core.autocrlf input
+#
+# set clone depthclone_depth: 5                      # clone entire repository history if not defined
+#
+# build Configuration, i.e. Debug, Release, etc.configuration: Release
+# to add several configurations to build matrix:#configuration:#  - Debug#  - Release
+build:#  parallel: true                  # enable MSBuild parallel builds# project: MyTestAzureCS.sln      # path to Visual Studio solution or project#  publish_wap: true               # package Web Application Projects (WAP) for Web Deploy#  publish_wap_xcopy: true         # package Web Application Projects (WAP) for XCopy deployment#  publish_azure: true             # package Azure Cloud Service projects and push to artifacts#  publish_nuget: true             # package projects with .nuspec files and push to artifacts#  publish_nuget_symbols: true     # generate and publish NuGet symbol packages# include_nuget_references: true  # add -IncludeReferencedProjects option while packaging NuGet artifacts
+#
+# MSBuild verbosity level#  verbosity: quiet|minimal|normal|detailed
+#
+# scripts to run before buildbefore_build:
+# Display .NET Core version
+  - cmd: dotnet --version
+  # Display minimal restore text
+  - cmd: dotnet restore --verbosity m
+# scripts to run *after* solution is built and *before* automatic packaging occurs (web apps, NuGet packages, Azure Cloud Services)before_package:
+# scripts to run after buildafter_build:
+# to run your custom scripts instead of automatic MSBuildbuild_script:
+- cmd: dotnet publish
+#
+# to disable automatic builds#build: off
+#
+test: off
+#
+#
+artifacts:
+  - path: src\ConsoleToWeb\bin\Release\netcoreapp2.0\publish  #Must be relative to root
+    name: aspnetcore-ConsoleToWeb
+#
+#
+deploy:
+  tag: $(appveyor_repo_tag_name)
+  description: 'Edit this release description'
+  provider: GitHub
+  auth_token:
+    secure: qLIGdWxIuBy1HLMu4+r4miMMP4x0l+hRr93l3tNDa/KRLCMUcEwPiRzdpw/WeMTl   # Encrypted personal access token using appveyor encryption tool
+  artifact: aspnetcore-ConsoleToWeb
+  draft: false
+  prerelease: false
+  on:
+    appveyor_repo_tag: true  # deploy only on tag push
