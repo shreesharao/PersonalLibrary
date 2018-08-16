@@ -1,4 +1,7 @@
 ﻿using System;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
+using System.IO;
 
 namespace SSR.PL.Web
 {
@@ -6,7 +9,12 @@ namespace SSR.PL.Web
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            BuildWebHost(args).Run();
+        }
+
+        private static IWebHost BuildWebHost(string[] args)
+        {
+            return WebHost.CreateDefaultBuilder().UseStartup<Startup>().Build();
         }
     }
 }
