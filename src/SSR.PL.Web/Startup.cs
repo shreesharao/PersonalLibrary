@@ -13,6 +13,7 @@ namespace SSR.PL.Web
 
         public void Configure(IApplicationBuilder applicationBuilder)
         {
+            applicationBuilder.UseStaticFiles();
             applicationBuilder.UseMvc(routeBuilder =>
             {
                 routeBuilder.MapRoute(name: "default", template: "{controller=Profile}/{action=Login}/{id?}");
