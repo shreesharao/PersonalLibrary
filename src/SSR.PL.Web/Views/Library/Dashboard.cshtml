@@ -1,1 +1,23 @@
-﻿After log in we will reach here
+﻿@using  Microsoft.AspNetCore.Identity
+@using SSR.PL.Web.Entities
+@using System;
+
+@inject SignInManager<ApplicationUser<Guid>> SignInManager
+@inject UserManager<ApplicationUser<Guid>> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <h3>After log in we will reach here</h3>
+
+}
+else
+{
+    <ul>
+        <li>
+            <a asp-action="Login" asp-controller="Profile">Log In</a>
+        </li>
+        <li>
+            <a asp-action="Register" asp-controller="Profile">Register</a>
+        </li>
+    </ul>
+}

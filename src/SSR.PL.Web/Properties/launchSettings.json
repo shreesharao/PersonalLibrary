@@ -1,4 +1,7 @@
 {
+  "iisSettings": {
+    "windowsAuthentication": true
+  },
   "profiles": {
     "SSR.PL.Web": {
       "commandName": "Project",

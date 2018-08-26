@@ -1,6 +1,7 @@
 ﻿<div id="divLogin" class="container">
     <div class="form-signin">
         <form id="frmLogin" method="post" asp-controller="Profile" asp-action="Login">
+            @Html.AntiForgeryToken()
             <h1>Login to Your Account</h1>
             <label for="inputEmail" class="sr-only">Email address</label>
             <input type="email" id="txtemail" name="email" class="form-control" placeholder="Email address" required="" autofocus="">
@@ -13,6 +14,7 @@
         </form>
     </div>
 </div>
+<a asp-action="Register" asp-controller="Profile">Register if new user</a>
 @section Scripts{
 
 }
