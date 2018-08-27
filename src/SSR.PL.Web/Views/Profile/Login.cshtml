@@ -1,5 +1,5 @@
 ﻿<div id="divLogin" class="container">
-    <div class="form-signin">
+    <div class="form-signin float-left mt-5">
         <form id="frmLogin" method="post" asp-controller="Profile" asp-action="Login">
             @Html.AntiForgeryToken()
             <h1>Login to Your Account</h1>
@@ -12,9 +12,14 @@
             </div>
             <button id="login" class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
         </form>
+        <a asp-action="Register" asp-controller="Profile">Register if new user</a>
+
+    </div>
+    <div class="float-right mt-5">
+        Authenticate using Google
+        <a asp-controller="signin-google" class="btn-block">Google</a>
     </div>
 </div>
-<a asp-action="Register" asp-controller="Profile">Register if new user</a>
 @section Scripts{
 
 }

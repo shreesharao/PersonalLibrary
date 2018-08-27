@@ -12,7 +12,14 @@ namespace SSR.PL.Web
 
         private static IWebHost BuildWebHost(string[] args)
         {
-            return WebHost.CreateDefaultBuilder(args).UseStartup<Startup>().Build();
+            return WebHost.CreateDefaultBuilder(args)
+                .UseKestrel(kestrelOptions =>
+                {
+                    kestrelOptions.Listen(System.Net.IPAddress.Loopback, 5001, listenOption =>
+                    {
+                        listenOption.UseHttps("certificate.pfx");
+                    });
+                }).UseStartup<Startup>().Build();
         }
     }
 }

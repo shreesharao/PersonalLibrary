@@ -10,15 +10,13 @@
 
   <PropertyGroup>
     <EnableDefaultRazorTargetAssemblyInfoAttributes>false</EnableDefaultRazorTargetAssemblyInfoAttributes>
+    <UserSecretsId>41c735c0-b7be-4823-a55e-1ea0ebc8d46d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="buildbundlerminifier" Version="2.8.391" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.8.2" Label="To resolve “SharedCompilationId” parameter is not supported by the “Csc” task error" />
-  </ItemGroup>
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot\js\" />
