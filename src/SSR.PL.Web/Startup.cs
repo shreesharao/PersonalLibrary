@@ -49,7 +49,7 @@ namespace SSR.PL.Web
             {
                 googleOptions.ClientId = _configuration["Google:ClientId"];
                 googleOptions.ClientSecret = _configuration["Google:ClientSecret"];
-                googleOptions.CallbackPath = "Profile/ExternalLogin";
+               // googleOptions.CallbackPath = _configuration["Google:CallbackPath"];
             });
 
             //configure identity password policy, lockout, and cookie configuration.
@@ -70,10 +70,10 @@ namespace SSR.PL.Web
             });
 
             //configure Cookies
-            serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
-            {
-                cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
-            });
+            //serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
+            //{
+            //    cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
+            //});
 
             serviceCollection.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
@@ -81,12 +81,13 @@ namespace SSR.PL.Web
         public void Configure(IApplicationBuilder applicationBuilder, IHostingEnvironment hostingEnvrionment)
         {
             applicationBuilder.UseStaticFiles();
+
+            applicationBuilder.UseAuthentication();
+
             applicationBuilder.UseMvc(routeBuilder =>
             {
                 routeBuilder.MapRoute(name: "default", template: "{controller=Profile}/{action=Login}/{id?}");
             });
-
-            applicationBuilder.UseAuthentication();
 
         }
 

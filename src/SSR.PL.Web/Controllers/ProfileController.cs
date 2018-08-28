@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SSR.PL.Web.Entities;
 using SSR.PL.Web.Models;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SSR.PL.Web.Controllers
@@ -21,6 +22,7 @@ namespace SSR.PL.Web.Controllers
             _signInManager = signInManager;
             _logger = loggerFactory.CreateLogger<ProfileController>();
         }
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login()
@@ -49,6 +51,39 @@ namespace SSR.PL.Web.Controllers
             }
             return View(loginViewModel);
         }
+
+        //external login
+        [HttpPost]
+        [AllowAnonymous]
+        public IActionResult ExternalLogin(string provider = "Google", string returnurl = null)
+        {
+            var redirectUrl = Url.Action("ExternalLoginCallback");
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties,provider);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string returnurl = null, string remoteError = null)
+        {
+            if (remoteError != null)
+            {
+                _logger.LogCritical(remoteError);
+                return RedirectToAction("Profile", "Login");
+            }
+            else
+            {
+                var result = await _signInManager.GetExternalLoginInfoAsync();
+
+                if (result == null)
+                {
+                    _logger.LogCritical("Authentication failed for external provider");
+                    return RedirectToAction("Profile", "Login");
+                }
+            }
+            return RedirectToAction("Dashboard", "Library");
+        }
+
 
         [HttpGet]
         [AllowAnonymous]
@@ -92,7 +127,7 @@ namespace SSR.PL.Web.Controllers
                 ModelState.AddModelError(string.Empty, error.Description);
             }
         }
-      
+
         #endregion
     }
 
