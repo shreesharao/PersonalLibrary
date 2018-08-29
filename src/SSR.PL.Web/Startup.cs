@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authentication.Google;
 using System.IO;
+using SSR.PL.Web.Options;
+using SSR.PL.Web.Services.Abstractions;
+using SSR.PL.Web.Services.Implementations;
 
 namespace SSR.PL.Web
 {
@@ -49,7 +52,7 @@ namespace SSR.PL.Web
             {
                 googleOptions.ClientId = _configuration["Google:ClientId"];
                 googleOptions.ClientSecret = _configuration["Google:ClientSecret"];
-               // googleOptions.CallbackPath = _configuration["Google:CallbackPath"];
+                //googleOptions.CallbackPath = _configuration["Google:CallbackPath"];
             });
 
             //configure identity password policy, lockout, and cookie configuration.
@@ -76,12 +79,20 @@ namespace SSR.PL.Web
             //});
 
             serviceCollection.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            //configure options
+            serviceCollection.Configure<SendGridOptions>(_configuration.GetSection("SendGrid"));
+
+            //add email servicce to IoC container
+            serviceCollection.AddSingleton<IApplicationEmailSender, ApplicationEmailSender>();
         }
 
         public void Configure(IApplicationBuilder applicationBuilder, IHostingEnvironment hostingEnvrionment)
         {
             applicationBuilder.UseStaticFiles();
 
+            //if i use Authentication middleware before MVC middleware then i have to use default call back for google. i.e /signin-google.
+            //In this case i can not use googleOptions.CallbackPath property
             applicationBuilder.UseAuthentication();
 
             applicationBuilder.UseMvc(routeBuilder =>
@@ -89,6 +100,7 @@ namespace SSR.PL.Web
                 routeBuilder.MapRoute(name: "default", template: "{controller=Profile}/{action=Login}/{id?}");
             });
 
+           
         }
 
     }

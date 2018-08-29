@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SSR.PL.Web.Entities;
 using SSR.PL.Web.Models;
+using SSR.PL.Web.Services.Abstractions;
 using System;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
 namespace SSR.PL.Web.Controllers
@@ -15,12 +17,14 @@ namespace SSR.PL.Web.Controllers
         private readonly UserManager<ApplicationUser<Guid>> _userManager;
         private readonly SignInManager<ApplicationUser<Guid>> _signInManager;
         private readonly ILogger _logger;
+        private readonly IApplicationEmailSender _applicationEmailSender;
 
-        public ProfileController(UserManager<ApplicationUser<Guid>> userManager, SignInManager<ApplicationUser<Guid>> signInManager, ILoggerFactory loggerFactory)
+        public ProfileController(UserManager<ApplicationUser<Guid>> userManager, SignInManager<ApplicationUser<Guid>> signInManager, ILoggerFactory loggerFactory, IApplicationEmailSender applicationEmailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = loggerFactory.CreateLogger<ProfileController>();
+            _applicationEmailSender = applicationEmailSender;
         }
 
         [HttpGet]
@@ -59,7 +63,7 @@ namespace SSR.PL.Web.Controllers
         {
             var redirectUrl = Url.Action("ExternalLoginCallback");
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-            return Challenge(properties,provider);
+            return Challenge(properties, provider);
         }
 
         [HttpGet]
@@ -69,7 +73,7 @@ namespace SSR.PL.Web.Controllers
             if (remoteError != null)
             {
                 _logger.LogCritical(remoteError);
-                return RedirectToAction("Profile", "Login");
+                return RedirectToAction("Login", "Profile");
             }
             else
             {
@@ -78,7 +82,11 @@ namespace SSR.PL.Web.Controllers
                 if (result == null)
                 {
                     _logger.LogCritical("Authentication failed for external provider");
-                    return RedirectToAction("Profile", "Login");
+                    return RedirectToAction("Login", "Profile");
+                }
+                else
+                {
+                    _logger.LogTrace($"Logged in with Provider :{result.ProviderDisplayName}");
                 }
             }
             return RedirectToAction("Dashboard", "Library");
@@ -98,11 +106,22 @@ namespace SSR.PL.Web.Controllers
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser<Guid>(registerViewModel.Email);
+                user.Email = registerViewModel.Email;
                 var result = await _userManager.CreateAsync(user, registerViewModel.Password);
 
                 if (result.Succeeded)
                 {
-                    return RedirectToAction(nameof(ProfileController.Login), "Profile");
+                    var emailConfirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var callbackUrl = Url.Page(
+                        pageName: $"/Profile/ConfirmEmail",
+                        pageHandler: null,
+                        values: new { userid = registerViewModel.Email, code = emailConfirmationToken },
+                        protocol: Request.Scheme);
+
+                    await _applicationEmailSender.SendEmailAsync(registerViewModel.Email, "Confirm your email",
+                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                    //return RedirectToAction(nameof(ProfileController.Login), "Profile");
                 }
                 else
                 {

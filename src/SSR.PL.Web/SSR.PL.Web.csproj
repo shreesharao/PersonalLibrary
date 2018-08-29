@@ -17,6 +17,7 @@
     <PackageReference Include="buildbundlerminifier" Version="2.8.391" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.8.2" Label="To resolve “SharedCompilationId” parameter is not supported by the “Csc” task error" />
+    <PackageReference Include="sendgrid" Version="9.9.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot\js\" />
