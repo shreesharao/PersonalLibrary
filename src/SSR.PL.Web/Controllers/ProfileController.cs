@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -6,7 +8,9 @@ using SSR.PL.Web.Entities;
 using SSR.PL.Web.Models;
 using SSR.PL.Web.Services.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
@@ -31,8 +35,17 @@ namespace SSR.PL.Web.Controllers
         [AllowAnonymous]
         public IActionResult Login()
         {
-            ViewBag.Title = "Login";
-            return View();
+            //if the user is already signed in, redirect him to dashboard page
+            if (_signInManager.IsSignedIn(User))
+            {
+                return RedirectToAction("Dashboard", "Library");
+            }
+            else
+            {
+                ViewBag.Title = "Login";
+                return View();
+            }
+
         }
 
         [HttpPost]
@@ -40,12 +53,26 @@ namespace SSR.PL.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel loginViewModel)
         {
+
             if (ModelState.IsValid)
             {
                 var result = await _signInManager.PasswordSignInAsync(loginViewModel.Email, loginViewModel.Password, loginViewModel.Rememberme, lockoutOnFailure: true);
 
                 if (result.Succeeded)
                 {
+                    //set cookie
+                    var claims = new List<Claim>()
+                    {
+                        new Claim(ClaimTypes.Name,loginViewModel.Email),
+                        new Claim(ClaimTypes.Role,$"Administrator")
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    var authProperties = new AuthenticationProperties();
+
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+
                     return RedirectToAction("Dashboard", "Library");
                 }
                 else
@@ -53,6 +80,8 @@ namespace SSR.PL.Web.Controllers
                     _logger.LogError($"{result}");
                 }
             }
+
+
             return View(loginViewModel);
         }
 
@@ -75,21 +104,52 @@ namespace SSR.PL.Web.Controllers
                 _logger.LogCritical(remoteError);
                 return RedirectToAction("Login", "Profile");
             }
-            else
+            var externalLoginInfo = await _signInManager.GetExternalLoginInfoAsync();
+            if (externalLoginInfo == null)
             {
-                var result = await _signInManager.GetExternalLoginInfoAsync();
-
-                if (result == null)
-                {
-                    _logger.LogCritical("Authentication failed for external provider");
-                    return RedirectToAction("Login", "Profile");
-                }
-                else
-                {
-                    _logger.LogTrace($"Logged in with Provider :{result.ProviderDisplayName}");
-                }
+                _logger.LogCritical("Authentication failed for external provider");
+                return RedirectToAction("Login", "Profile");
             }
-            return RedirectToAction("Dashboard", "Library");
+
+            var email = externalLoginInfo.Principal.Claims.FirstOrDefault(claim =>
+             {
+                 return claim.Type.Contains($"emailaddress");
+             }).Value;
+
+            //add the user to the database
+            var addLoginResult = await _userManager.AddLoginAsync(
+                new ApplicationUser<Guid>(email),
+                new UserLoginInfo(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey, externalLoginInfo.ProviderDisplayName));
+
+            if (addLoginResult == null)
+            {
+                _logger.LogCritical("Not able to add external user to database");
+                return RedirectToAction("Login", "Profile");
+            }
+            //sign in the user
+            var signInResult = await _signInManager.ExternalLoginSignInAsync(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey, true);
+
+            if (signInResult.Succeeded)
+            {
+                //sign-in the user with Identity.External scheme
+
+                var claims = new List<Claim>()
+                    {
+                        new Claim(ClaimTypes.Name,externalLoginInfo.Principal.Claims.FirstOrDefault().Subject.Name)
+                    };
+
+                var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ExternalScheme);
+
+                var authProperties = new AuthenticationProperties();
+
+                await HttpContext.SignInAsync(IdentityConstants.ExternalScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+                _logger.LogTrace($"Logged in with Provider :{externalLoginInfo.ProviderDisplayName}");
+
+                return RedirectToAction("Dashboard", "Library");
+            }
+
+            _logger.LogCritical(signInResult.ToString());
+            return RedirectToAction("Login", "Profile");
         }
 
 
@@ -133,6 +193,10 @@ namespace SSR.PL.Web.Controllers
 
         public async Task<IActionResult> Logout()
         {
+            //delete the cookie on logout
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            //logout from identity
             await _signInManager.SignOutAsync();
             _logger.LogDebug("user logged out successfully");
             return RedirectToAction(nameof(ProfileController.Login), "Profile");

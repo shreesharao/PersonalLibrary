@@ -9,6 +9,7 @@ using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using System.IO;
 using SSR.PL.Web.Options;
 using SSR.PL.Web.Services.Abstractions;
@@ -52,8 +53,17 @@ namespace SSR.PL.Web
             {
                 googleOptions.ClientId = _configuration["Google:ClientId"];
                 googleOptions.ClientSecret = _configuration["Google:ClientSecret"];
-                //googleOptions.CallbackPath = _configuration["Google:CallbackPath"];
-            });
+#pragma warning disable S125 // Sections of code should not be commented out
+                //this option can only be used when mvc middleware is called before authentication
+                //googleOptions.CallbackPath = _configuration["Google:CallbackPath"]; 
+#pragma warning restore S125 // Sections of code should not be commented out
+            }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, cookieAuthenticationOptions =>
+             {
+
+                 cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
+                 cookieAuthenticationOptions.Cookie.HttpOnly = true;
+                 cookieAuthenticationOptions.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+             });
 
             //configure identity password policy, lockout, and cookie configuration.
             serviceCollection.Configure<IdentityOptions>(identityOptions =>
@@ -100,7 +110,7 @@ namespace SSR.PL.Web
                 routeBuilder.MapRoute(name: "default", template: "{controller=Profile}/{action=Login}/{id?}");
             });
 
-           
+
         }
 
     }
