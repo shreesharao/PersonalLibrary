@@ -69,7 +69,10 @@ namespace SSR.PL.Web.Controllers
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                    var authProperties = new AuthenticationProperties();
+                    var authProperties = new AuthenticationProperties()
+                    {
+                        IsPersistent = true
+                    };
 
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
@@ -117,8 +120,31 @@ namespace SSR.PL.Web.Controllers
              }).Value;
 
             //add the user to the database
+            //I was getting System.InvalidOperationException: User security stamp cannot be null when calling _userManager.AddLoginAsync.
+            //After some digging I found that my newly created User-Entities did not have a SecurityStamp. 
+            //And the asp.net default UserManager expects a SecurityStamp and wants to set it as a Claim in the ClaimsIdentity.
+            var newUser = new ApplicationUser<Guid>(email)
+            {
+                SecurityStamp = Guid.NewGuid().ToString(),
+                Email = email
+
+            };
+
+            var existingUser = await _userManager.FindByEmailAsync(newUser.Email);
+
+            if (existingUser.Email == null)
+            {
+                var createUserResult = await _userManager.CreateAsync(newUser);
+
+                if (!createUserResult.Succeeded)
+                {
+                    _logger.LogCritical($"Not able to create the user.Reason-{createUserResult}");
+                    return RedirectToAction("Login", "Profile");
+                }
+            }
+
             var addLoginResult = await _userManager.AddLoginAsync(
-                new ApplicationUser<Guid>(email),
+                existingUser.Email != null ? existingUser : newUser,
                 new UserLoginInfo(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey, externalLoginInfo.ProviderDisplayName));
 
             if (addLoginResult == null)
@@ -195,6 +221,8 @@ namespace SSR.PL.Web.Controllers
         {
             //delete the cookie on logout
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
             //logout from identity
             await _signInManager.SignOutAsync();
