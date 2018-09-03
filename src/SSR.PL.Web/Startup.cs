@@ -65,8 +65,20 @@ namespace SSR.PL.Web
                  cookieAuthenticationOptions.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
              });
 
+#pragma warning disable S125 // Sections of code should not be commented out
+            //ConfigureApplicationCookie is used to tweak the Identity cookie settings. Not required when using cookies without identity.
+            //serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
+            //{
+
+            //    cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
+            //    cookieAuthenticationOptions.Cookie.HttpOnly = true;
+            //    cookieAuthenticationOptions.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+            //});
+#pragma warning restore S125 // Sections of code should not be commented out
+
             //configure identity password policy, lockout, and cookie configuration.
             serviceCollection.Configure<IdentityOptions>(identityOptions =>
+
             {
                 //lockout
                 identityOptions.Lockout.MaxFailedAccessAttempts = 3;
@@ -82,13 +94,9 @@ namespace SSR.PL.Web
                 identityOptions.User.RequireUniqueEmail = true;
             });
 
-            //configure Cookies
-            //serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
-            //{
-            //    cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
-            //});
-
             serviceCollection.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            
 
             //configure options
             serviceCollection.Configure<SendGridOptions>(_configuration.GetSection("SendGrid"));
@@ -97,7 +105,7 @@ namespace SSR.PL.Web
             serviceCollection.AddSingleton<IApplicationEmailSender, ApplicationEmailSender>();
         }
 
-        public void Configure(IApplicationBuilder applicationBuilder, IHostingEnvironment hostingEnvrionment)
+        public void Configure(IApplicationBuilder applicationBuilder)
         {
             applicationBuilder.UseStaticFiles();
 
