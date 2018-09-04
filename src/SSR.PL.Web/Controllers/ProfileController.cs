@@ -60,6 +60,7 @@ namespace SSR.PL.Web.Controllers
 
                 if (result.Succeeded)
                 {
+
                     //set cookie
                     var claims = new List<Claim>()
                     {
@@ -69,11 +70,14 @@ namespace SSR.PL.Web.Controllers
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                    var authProperties = new AuthenticationProperties()
-                    {
-                        IsPersistent = true
-                    };
+                    var authProperties = new AuthenticationProperties();
 
+                    //Make the cookie persisitent if the user wants to
+                    if(loginViewModel.Rememberme)
+                    {
+                        authProperties.IsPersistent = true;
+                    }
+                    
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
                     return RedirectToAction("Dashboard", "Library");
