@@ -68,7 +68,7 @@ namespace SSR.PL.Web.Controllers
                         new Claim(ClaimTypes.Role,$"Administrator")
                     };
 
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
 
                     var authProperties = new AuthenticationProperties();
 
@@ -78,7 +78,7 @@ namespace SSR.PL.Web.Controllers
                         authProperties.IsPersistent = true;
                     }
                     
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+                    await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
                     return RedirectToAction("Dashboard", "Library");
                 }
