@@ -8,12 +8,13 @@ using SSR.PL.Web.Entities;
 using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.IO;
 using SSR.PL.Web.Options;
 using SSR.PL.Web.Services.Abstractions;
 using SSR.PL.Web.Services.Implementations;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace SSR.PL.Web
 {
@@ -67,13 +68,11 @@ namespace SSR.PL.Web
 
 #pragma warning disable S125 // Sections of code should not be commented out
             //ConfigureApplicationCookie is used to tweak the Identity cookie settings. Not required when using cookies without identity.
-            //serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
-            //{
-
-            //    cookieAuthenticationOptions.Cookie.Name = "SSR.PL.Web";
-            //    cookieAuthenticationOptions.Cookie.HttpOnly = true;
-            //    cookieAuthenticationOptions.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
-            //});
+            serviceCollection.ConfigureApplicationCookie(cookieAuthenticationOptions =>
+            {
+                cookieAuthenticationOptions.LoginPath = new PathString("/Profile/Login");
+                cookieAuthenticationOptions.Cookie.Name = "PersonalLibraryApplicationCookie";
+            });
 #pragma warning restore S125 // Sections of code should not be commented out
 
             //configure identity password policy, lockout, and cookie configuration.
@@ -94,9 +93,17 @@ namespace SSR.PL.Web
                 identityOptions.User.RequireUniqueEmail = true;
             });
 
+            serviceCollection.AddAuthorization(authorizationOptions =>
+            {
+                authorizationOptions.AddPolicy("AdministratorUsers", authorizationPolicyBuilder =>
+                {
+                    authorizationPolicyBuilder.RequireClaim(ClaimTypes.Role, "Administrator");
+                });
+            });
+
             serviceCollection.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            
+
 
             //configure options
             serviceCollection.Configure<SendGridOptions>(_configuration.GetSection("SendGrid"));

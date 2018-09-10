@@ -8,14 +8,15 @@
 @if (SignInManager.IsSignedIn(User))
 {
     <h3>upon successfull authentication we will reach here</h3>
-    <ul>
-        @foreach (Claim claim in User.Claims)
-        {
+
+    @foreach (Claim claim in User.Claims)
+    {
+        <ul>
             <li>@claim.Subject.Name</li>
             <li>@claim.Value</li>
-        }
-    </ul>
-    
+        </ul>
+
+    }
 }
 else
 {

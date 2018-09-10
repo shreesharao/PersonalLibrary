@@ -1,5 +1,11 @@
 ﻿body {
+    text-align: center;
+    color: red;
+}
 
-   text-align:center;
-   color:red;
+ul {
+    list-style: circle;
+    /*margin-left: 0;*/
+    padding-left: 1em;
+    text-indent: -1em;
 }

@@ -165,7 +165,9 @@ namespace SSR.PL.Web.Controllers
 
                 var claims = new List<Claim>()
                     {
-                        new Claim(ClaimTypes.Name,externalLoginInfo.Principal.Claims.FirstOrDefault().Subject.Name)
+                        new Claim(ClaimTypes.Name,externalLoginInfo.Principal.Claims.FirstOrDefault().Subject.Name),
+                        new Claim(ClaimTypes.Role,"Administrator")
+                        
                     };
 
                 var claimsIdentity = new ClaimsIdentity(claims, IdentityConstants.ExternalScheme);
