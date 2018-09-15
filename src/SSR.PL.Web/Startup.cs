@@ -15,6 +15,8 @@ using SSR.PL.Web.Services.Abstractions;
 using SSR.PL.Web.Services.Implementations;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace SSR.PL.Web
 {
@@ -101,7 +103,11 @@ namespace SSR.PL.Web
                 });
             });
 
-            serviceCollection.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            serviceCollection.AddMvc(mvcOptions =>
+            {
+                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                mvcOptions.Filters.Add(new AuthorizeFilter(policy));
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
 
 

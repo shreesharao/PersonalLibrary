@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace SSR.PL.Web.Controllers
 {
+    [AllowAnonymous]
     public class ProfileController : Controller
     {
         private readonly UserManager<ApplicationUser<Guid>> _userManager;
