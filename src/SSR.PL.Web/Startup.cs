@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using SSR.PL.Web.Requirements;
+using SSR.PL.Web.AuthorizationHandlers;
 
 namespace SSR.PL.Web
 {
@@ -97,11 +99,18 @@ namespace SSR.PL.Web
 
             serviceCollection.AddAuthorization(authorizationOptions =>
             {
+                //default value is true. In which case all authorization handlers are called even when context.Fail is called in one handler.
+                authorizationOptions.InvokeHandlersAfterFailure = true;
+
                 authorizationOptions.AddPolicy("AdministratorUsers", authorizationPolicyBuilder =>
                 {
                     authorizationPolicyBuilder.RequireClaim(ClaimTypes.Role, "Administrator");
+                    authorizationPolicyBuilder.Requirements.Add(new RoleAuthorizationRequirement("Administrator"));
                 });
             });
+
+            //add custom authorization handler
+            serviceCollection.AddSingleton<IAuthorizationHandler, RoleAuthorizationHandler>();
 
             serviceCollection.AddMvc(mvcOptions =>
             {
