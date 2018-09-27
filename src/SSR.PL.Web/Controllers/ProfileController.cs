@@ -137,7 +137,7 @@ namespace SSR.PL.Web.Controllers
 
             var existingUser = await _userManager.FindByEmailAsync(newUser.Email);
 
-            if (existingUser.Email == null)
+            if (existingUser?.Email == null)
             {
                 var createUserResult = await _userManager.CreateAsync(newUser);
 
@@ -149,7 +149,7 @@ namespace SSR.PL.Web.Controllers
             }
 
             var addLoginResult = await _userManager.AddLoginAsync(
-                existingUser.Email != null ? existingUser : newUser,
+                existingUser?.Email != null ? existingUser : newUser,
                 new UserLoginInfo(externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey, externalLoginInfo.ProviderDisplayName));
 
             if (addLoginResult == null)

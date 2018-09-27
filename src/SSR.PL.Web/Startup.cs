@@ -1,24 +1,25 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using SSR.PL.Web.Data;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SSR.PL.Web.AuthorizationHandlers;
+using SSR.PL.Web.AuthorizationPolicyProviders;
+using SSR.PL.Web.Data;
 using SSR.PL.Web.Entities;
-using System;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.IO;
 using SSR.PL.Web.Options;
+using SSR.PL.Web.Requirements;
 using SSR.PL.Web.Services.Abstractions;
 using SSR.PL.Web.Services.Implementations;
-using Microsoft.AspNetCore.Http;
+using System;
+using System.IO;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using SSR.PL.Web.Requirements;
-using SSR.PL.Web.AuthorizationHandlers;
 
 namespace SSR.PL.Web
 {
@@ -43,7 +44,6 @@ namespace SSR.PL.Web
 
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-
             //Add DBContext
             serviceCollection.AddDbContext<ApplicationDBContext>(dbContextOptionsBuilder =>
             {
@@ -112,10 +112,19 @@ namespace SSR.PL.Web
             //add custom authorization handler
             serviceCollection.AddSingleton<IAuthorizationHandler, RoleAuthorizationHandler>();
 
+            //add custom authorization policy provider
+            serviceCollection.AddTransient<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
+
             serviceCollection.AddMvc(mvcOptions =>
             {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 mvcOptions.Filters.Add(new AuthorizeFilter(policy));
+
+                //If you do not set this, you will get error -
+                //System.ArgumentNullException: Value cannot be null.
+                //Parameter name: policy in Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder.Combine(AuthorizationPolicy policy)
+                //Refer - https://github.com/aspnet/Mvc/issues/7809
+                mvcOptions.AllowCombiningAuthorizeFilters = false; 
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
 
@@ -125,6 +134,7 @@ namespace SSR.PL.Web
 
             //add email servicce to IoC container
             serviceCollection.AddSingleton<IApplicationEmailSender, ApplicationEmailSender>();
+
         }
 
         public void Configure(IApplicationBuilder applicationBuilder)
