@@ -135,11 +135,19 @@ namespace SSR.PL.Web
             //add email servicce to IoC container
             serviceCollection.AddSingleton<IApplicationEmailSender, ApplicationEmailSender>();
 
+            //add HTTPS redirection
+            serviceCollection.AddHttpsRedirection(httpsRedirectOptions =>
+            {
+                httpsRedirectOptions.HttpsPort = 5001;
+            });
+
         }
 
         public void Configure(IApplicationBuilder applicationBuilder)
         {
             applicationBuilder.UseStaticFiles();
+
+            applicationBuilder.UseHttpsRedirection();
 
             //if i use Authentication middleware before MVC middleware then i have to use default call back for google. i.e /signin-google.
             //In this case i can not use googleOptions.CallbackPath property
